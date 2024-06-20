@@ -155,15 +155,17 @@ static void combat_screen(void)
   combat_menu = lv_menu_create(lv_screen_active());
   lv_obj_set_size(combat_menu, lv_display_get_horizontal_resolution(NULL), lv_display_get_vertical_resolution(NULL));
   lv_obj_center(combat_menu);
+  lv_menu_set_mode_header(combat_menu, LV_MENU_HEADER_TOP_UNFIXED);
 
   // stat_cont
   // stat_cont
 
   stat_page = lv_menu_page_create(combat_menu, NULL);
   lv_menu_set_page(combat_menu, stat_page);
-  entry = lv_textarea_create(stat_page);
+  stat_cont = lv_menu_cont_create(stat_page);
+  entry = lv_textarea_create(stat_cont);
   lv_textarea_set_one_line(entry, true);
-  btn = lv_btn_create(stat_page);
+  btn = lv_btn_create(stat_cont);
   lv_obj_add_event_cb(btn, get_number, LV_EVENT_ALL, entry);
 
   combat_row = 4; // Get from user on input screen
@@ -171,8 +173,9 @@ static void combat_screen(void)
 
   // create_grid(stat_col, stat_row);
 
-  sub_combatPage = lv_menu_page_create(combat_menu, "Combatants");
-  lv_obj_set_style_pad_hor(sub_combatPage, lv_obj_get_style_pad_left(lv_menu_get_main_header(combat_menu), 0), 0);
+  sub_combatPage = lv_menu_page_create(combat_menu, NULL);
+  lv_obj_set_style_pad_hor(sub_combatPage, 0, 0);
+  lv_obj_set_style_pad_ver(sub_combatPage, 0, 0);
   lv_menu_set_sidebar_page(combat_menu, sub_combatPage);
   lv_menu_separator_create(sub_combatPage);
   lv_menu_cont_create(sub_combatPage);
@@ -206,7 +209,7 @@ static void combatant(void)
   lv_obj_set_flex_flow(combat_cont, LV_FLEX_FLOW_ROW);
 
   label = lv_label_create(combat_cont);
-  lv_label_set_text(label, LV_SYMBOL_CUT);
+  lv_label_set_text(label, "Init: ");
 
   btn = lv_btn_create(combat_cont);
   lv_obj_set_size(btn, 75, 30);
@@ -218,7 +221,7 @@ static void combatant(void)
   entry = lv_textarea_create(combat_cont);
   lv_textarea_set_one_line(entry, true);
   lv_textarea_set_max_length(entry, 3);
-  lv_obj_set_size(entry, 50, 50);
+  lv_obj_set_size(entry, 50, 45);
 
   label = lv_label_create(combat_cont);
   lv_label_set_text(label, "/32");
