@@ -38,6 +38,8 @@ static lv_obj_t * combat_menu;
 static lv_obj_t * stat_page;
 static lv_obj_t * stat_section;
 static lv_obj_t * stat_cont;
+static lv_obj_t * entry;
+static lv_obj_t * btn;
 
 
 static lv_obj_t * sub_combatPage;
@@ -48,6 +50,7 @@ static int16_t combat_row;
 static lv_obj_t * combat_win;
 
 static lv_obj_t * label;
+static uint16_t num_combat = 0;
 
 
 /**********************
@@ -78,6 +81,8 @@ int monitor_hor_res = 800, monitor_ver_res = 480;
 static void combat_screen(void);
 static void create_grid(int16_t col, int16_t row);
 static void combatant(void);
+
+static void get_number(lv_event_t * e);
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -156,8 +161,10 @@ static void combat_screen(void)
 
   stat_page = lv_menu_page_create(combat_menu, NULL);
   lv_menu_set_page(combat_menu, stat_page);
-
-  combatant();
+  entry = lv_textarea_create(stat_page);
+  lv_textarea_set_one_line(entry, true);
+  btn = lv_btn_create(stat_page);
+  lv_obj_add_event_cb(btn, get_number, LV_EVENT_ALL, entry);
 
   combat_row = 4; // Get from user on input screen
   // combat_col = 4 is always predefined for fields in combatant window
@@ -170,7 +177,6 @@ static void combat_screen(void)
   lv_menu_separator_create(sub_combatPage);
   lv_menu_cont_create(sub_combatPage);
 
-  combatant();
 }
 
 static void create_grid(int16_t col, int16_t row)
@@ -178,10 +184,44 @@ static void create_grid(int16_t col, int16_t row)
   // lv_obj_set_layout(stat_page, LV_LAYOUT_GRID);
 }
 
+static void get_number(lv_event_t * e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * obj = lv_event_get_target(e);
+  lv_obj_t * ta = lv_event_get_user_data(e);
+
+  if(code == LV_EVENT_CLICKED){
+    num_combat = atoi(lv_textarea_get_text(ta));
+    for(int i = 0; i < num_combat; i++){
+      combatant();
+    }
+  }
+  return;
+}
+
 static void combatant(void)
 {
-  combat_section = lv_menu_section_create(sub_combatPage);
-  combat_win = lv_win_create(combat_section);
-  lv_obj_set_size(combat_win, 250, 50);
-  // lv_obj_center(combat_win);
+  combat_cont = lv_menu_cont_create(sub_combatPage);
+  lv_obj_set_layout(combat_cont, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(combat_cont, LV_FLEX_FLOW_ROW);
+
+  label = lv_label_create(combat_cont);
+  lv_label_set_text(label, LV_SYMBOL_CUT);
+
+  btn = lv_btn_create(combat_cont);
+  lv_obj_set_size(btn, 75, 30);
+
+  label = lv_label_create(btn);
+  lv_label_set_text(label, " Ogre");
+  lv_obj_center(label);
+
+  entry = lv_textarea_create(combat_cont);
+  lv_textarea_set_one_line(entry, true);
+  lv_textarea_set_max_length(entry, 3);
+  lv_obj_set_size(entry, 50, 50);
+
+  label = lv_label_create(combat_cont);
+  lv_label_set_text(label, "/32");
+
+  return;
 }
