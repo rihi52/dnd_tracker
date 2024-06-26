@@ -23,6 +23,38 @@
 /**********************
  *      TYPEDEFS
  **********************/
+typedef struct part{
+  char *name;
+  bool uniqueChar; // True for player character or Unique Enemy
+  int init;
+  int initSpot;
+  int turnCount;
+  int ac;
+  int hp;
+  struct part *next;
+}part;
+
+/* Orc Enemies */
+part orc = {"Orc", false, 0, 0, 0, 13, 15, NULL};
+
+/* Orog Enemies */
+part orog = {"Orog", false, 0, 0, 0, 18, 53, &orc};
+
+/* Magmin Enemies */
+part magmin = {"Magmin", false, 0, 0, 0, 15, 9, &orog};
+
+/* Linked list of unique part stats */
+part ildmane = {"ildmane", true, 0, 0, 0, 18, 162, &magmin};
+part okssort = {"okssort", true, 0, 0, 0, 17, 162, &ildmane};
+
+/* Linked list of player stats */
+part theon = {"theon", true, 0, 0, 0,16, 55, &okssort};
+part pax = {"pax", true, 0, 0, 0, 16, 57, &theon};
+part finn = {"finn", true, 0, 0, 0, 15, 36, &pax};
+part ravi = {"ravi", true, 0, 0, 0, 16, 34, &finn};
+
+/***** ARRAY OF COMBATANTS ******/
+part * combatants[9] = {&ravi, &finn, &pax, &theon, &okssort, &ildmane, &magmin, &orog, &orc};
 
 /**********************
  *  STATIC PROTOTYPES
@@ -52,6 +84,9 @@ static lv_obj_t * combat_win;
 static lv_obj_t * label;
 static uint16_t num_combat = 0;
 
+static int32_t column_dsc[] = {100, 80, 80 , LV_GRID_TEMPLATE_LAST};   /*2 columns with 100 and 400 ps width*/
+static int32_t row_dsc[] = {50, LV_GRID_TEMPLATE_LAST};
+
 
 /**********************
  *      MACROS
@@ -78,8 +113,13 @@ int monitor_hor_res = 800, monitor_ver_res = 480;
 /**********************
  *  STATIC PROTOTYPES
  **********************/
+static void setup_screen(void);
+static void fill_select_page(lv_obj_t * page);
+static void add_combatant(lv_event_t * e);
+
+static void switch_screen(lv_event_t * e);
+
 static void combat_screen(void);
-static void create_grid(int16_t col, int16_t row);
 static void combatant(void);
 
 static void get_number(lv_event_t * e);
@@ -100,7 +140,7 @@ int main(int argc, char **argv)
   hal_init(monitor_hor_res, monitor_ver_res);
 
   // lv_demo_widgets();
-  combat_screen();
+  setup_screen();
 
   while(1) {
     /* Periodically call the lv_task handler.
@@ -149,6 +189,52 @@ static lv_display_t * hal_init(int32_t w, int32_t h)
   return disp;
 }
 
+/**********************
+ *       SCREENS
+ **********************/
+static void setup_screen(void)
+{
+  lv_obj_t * win;
+  lv_obj_t * head_cont;
+  lv_obj_t * label;
+  lv_obj_t * selected_cont;
+
+  win = lv_win_create(lv_screen_active());
+  head_cont = lv_win_get_header(win);
+  label = lv_label_create(head_cont);
+  lv_label_set_text(label, "Combat Builder");
+
+  lv_obj_t * cont = lv_win_get_content(win);
+  lv_obj_set_style_pad_all(cont, 0, 0);
+
+  lv_obj_t * builder_menu = lv_menu_create(cont);
+  lv_obj_set_size(builder_menu, lv_pct(100), lv_pct(100));
+  lv_obj_center(builder_menu);
+  lv_menu_set_mode_header(builder_menu, LV_MENU_HEADER_TOP_UNFIXED);
+
+  lv_obj_t * selected_page = lv_menu_page_create(builder_menu, NULL);
+  lv_menu_set_page(builder_menu, selected_page);
+  lv_menu_separator_create(selected_page);
+  selected_cont = lv_menu_cont_create(selected_page);
+
+  lv_obj_t * start_btn = lv_btn_create(selected_cont);
+  lv_obj_add_event_cb(start_btn, switch_screen, LV_EVENT_ALL, NULL);
+
+  lv_obj_t * start_label = lv_label_create(start_btn);
+  lv_label_set_text(start_label, "Start!");
+
+  lv_obj_t * sub_selectPage = lv_menu_page_create(builder_menu, NULL);
+  lv_obj_set_width(sub_selectPage, lv_pct(100));
+  lv_menu_set_sidebar_page(builder_menu, sub_selectPage);
+
+  fill_select_page(sub_selectPage);
+
+  lv_menu_t* menu = (lv_menu_t*)builder_menu;
+  // set sidebar width
+  lv_obj_set_width(menu->sidebar, LV_PCT(40));
+
+}
+
 static void combat_screen(void)
 {
 
@@ -162,6 +248,7 @@ static void combat_screen(void)
 
   stat_page = lv_menu_page_create(combat_menu, NULL);
   lv_menu_set_page(combat_menu, stat_page);
+  lv_menu_separator_create(stat_page);
   stat_cont = lv_menu_cont_create(stat_page);
   entry = lv_textarea_create(stat_cont);
   lv_textarea_set_one_line(entry, true);
@@ -174,32 +261,53 @@ static void combat_screen(void)
   // create_grid(stat_col, stat_row);
 
   sub_combatPage = lv_menu_page_create(combat_menu, NULL);
-  lv_obj_set_style_pad_hor(sub_combatPage, 0, 0);
-  lv_obj_set_style_pad_ver(sub_combatPage, 0, 0);
+  lv_obj_set_width(sub_combatPage, lv_pct(100));
   lv_menu_set_sidebar_page(combat_menu, sub_combatPage);
-  lv_menu_separator_create(sub_combatPage);
-  lv_menu_cont_create(sub_combatPage);
+  //lv_menu_separator_create(sub_combatPage);
+  //lv_menu_cont_create(sub_combatPage);
+
+  lv_menu_t* menu_t = (lv_menu_t*)combat_menu;
+  // set sidebar width
+  lv_obj_set_width(menu_t->sidebar, LV_PCT(40));
 
 }
 
-static void create_grid(int16_t col, int16_t row)
-{
-  // lv_obj_set_layout(stat_page, LV_LAYOUT_GRID);
-}
 
-static void get_number(lv_event_t * e)
+/**********************
+ *  HELPER FUNCTIONS
+ **********************/
+static void fill_select_page(lv_obj_t * page)
 {
-  lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t * obj = lv_event_get_target(e);
-  lv_obj_t * ta = lv_event_get_user_data(e);
+  part * temp = &magmin;
 
-  if(code == LV_EVENT_CLICKED){
-    num_combat = atoi(lv_textarea_get_text(ta));
-    for(int i = 0; i < num_combat; i++){
-      combatant();
-    }
+  // ARRAY OF CONT TO KEEP TRACK OF BUTTONS??
+
+  while(temp != NULL){
+    lv_obj_t * select_cont = lv_menu_cont_create(page);
+    lv_obj_set_width(select_cont, lv_pct(100));
+    lv_obj_set_layout(select_cont, LV_LAYOUT_GRID);
+    lv_obj_set_grid_dsc_array(select_cont, column_dsc, row_dsc);
+
+    label = lv_label_create(select_cont);
+    lv_label_set_text(label, temp->name);
+    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 0, 1);
+
+    entry = lv_textarea_create(select_cont);
+    lv_obj_set_width(entry, 50);
+    lv_textarea_set_one_line(entry, true);
+    lv_textarea_set_max_length(entry, 2);
+    lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_START, 0, 1);
+
+    btn = lv_btn_create(select_cont);
+    lv_obj_set_size(btn, 75, 30);
+    lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_CENTER, 2, 1, LV_GRID_ALIGN_START, 0, 1);
+
+    label = lv_label_create(btn);
+    lv_label_set_text(label, "Add");
+    lv_obj_center(label);
+
+    temp = temp->next;
   }
-  return;
 }
 
 static void combatant(void)
@@ -215,16 +323,53 @@ static void combatant(void)
   lv_obj_set_size(btn, 75, 30);
 
   label = lv_label_create(btn);
-  lv_label_set_text(label, " Ogre");
+  lv_label_set_text(label, "Ogre");
   lv_obj_center(label);
 
   entry = lv_textarea_create(combat_cont);
   lv_textarea_set_one_line(entry, true);
   lv_textarea_set_max_length(entry, 3);
-  lv_obj_set_size(entry, 50, 45);
+  lv_obj_set_size(entry, 55, 45);
 
   label = lv_label_create(combat_cont);
   lv_label_set_text(label, "/32");
 
+  return;
+}
+
+/**********************
+ *   BUTTON COMMANDS
+ **********************/
+static void switch_screen(lv_event_t * e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * obj = lv_event_get_target(e);
+
+  if (code == LV_EVENT_CLICKED){
+    combat_screen();
+  }
+}
+
+static void add_combatant(lv_event_t * e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * obj = lv_event_get_target(e);
+  if (code == LV_EVENT_CLICKED){
+
+  }
+}
+
+static void get_number(lv_event_t * e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t * obj = lv_event_get_target(e);
+  lv_obj_t * ta = lv_event_get_user_data(e);
+
+  if(code == LV_EVENT_CLICKED){
+    num_combat = atoi(lv_textarea_get_text(ta));
+    for(int i = 0; i < num_combat; i++){
+      combatant();
+    }
+  }
   return;
 }
