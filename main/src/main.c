@@ -55,6 +55,12 @@ part ravi = {"ravi", true, 0, 0, 0, 16, 34, &finn};
 
 /***** ARRAY OF COMBATANTS ******/
 part * combatants[9] = {&ravi, &finn, &pax, &theon, &okssort, &ildmane, &magmin, &orog, &orc};
+part * enemies[3] = {&magmin, &orog, &orc};
+
+/***** GRID SETTINGS *****/
+static int32_t select_col_dsc[] = {100, 80, 80 , LV_GRID_TEMPLATE_LAST};
+static int32_t select_row_dsc[] = {50, LV_GRID_TEMPLATE_LAST};
+
 
 /**********************
  *  STATIC PROTOTYPES
@@ -66,6 +72,10 @@ static lv_display_t * hal_init(int32_t w, int32_t h);
  **********************/
 static lv_obj_t * scr;
 static lv_obj_t * combat_menu;
+
+#define NUM_COMBATANTS 3
+static lv_obj_t * select_arr_cont[NUM_COMBATANTS];
+static lv_obj_t * selected_page;
 
 static lv_obj_t * stat_page;
 static lv_obj_t * stat_section;
@@ -84,7 +94,7 @@ static lv_obj_t * combat_win;
 static lv_obj_t * label;
 static uint16_t num_combat = 0;
 
-static int32_t column_dsc[] = {100, 80, 80 , LV_GRID_TEMPLATE_LAST};   /*2 columns with 100 and 400 ps width*/
+static int32_t column_dsc[] = {100, 80, 80, LV_GRID_TEMPLATE_LAST};
 static int32_t row_dsc[] = {50, LV_GRID_TEMPLATE_LAST};
 
 
@@ -115,11 +125,13 @@ int monitor_hor_res = 800, monitor_ver_res = 480;
  **********************/
 static void setup_screen(void);
 static void fill_select_page(lv_obj_t * page);
-static void add_combatant(lv_event_t * e);
+static void read_combatant(lv_event_t * e);
+static void add_combatant(part * combatant, uint16_t num);
 
 static void switch_screen(lv_event_t * e);
 
 static void combat_screen(void);
+static void create_grid(int16_t col, int16_t row);
 static void combatant(void);
 
 static void get_number(lv_event_t * e);
@@ -212,16 +224,20 @@ static void setup_screen(void)
   lv_obj_center(builder_menu);
   lv_menu_set_mode_header(builder_menu, LV_MENU_HEADER_TOP_UNFIXED);
 
-  lv_obj_t * selected_page = lv_menu_page_create(builder_menu, NULL);
+  selected_page = lv_menu_page_create(builder_menu, NULL);
   lv_menu_set_page(builder_menu, selected_page);
   lv_menu_separator_create(selected_page);
   selected_cont = lv_menu_cont_create(selected_page);
+  lv_obj_set_width(selected_cont, lv_pct(100));
 
   lv_obj_t * start_btn = lv_btn_create(selected_cont);
+  // lv_obj_set_align(start_btn, LV_ALIGN_BOTTOM_RIGHT);
+  lv_obj_set_pos(start_btn, 270, 50);
   lv_obj_add_event_cb(start_btn, switch_screen, LV_EVENT_ALL, NULL);
 
   lv_obj_t * start_label = lv_label_create(start_btn);
   lv_label_set_text(start_label, "Start!");
+  lv_obj_center(start_label);
 
   lv_obj_t * sub_selectPage = lv_menu_page_create(builder_menu, NULL);
   lv_obj_set_width(sub_selectPage, lv_pct(100));
@@ -243,9 +259,6 @@ static void combat_screen(void)
   lv_obj_center(combat_menu);
   lv_menu_set_mode_header(combat_menu, LV_MENU_HEADER_TOP_UNFIXED);
 
-  // stat_cont
-  // stat_cont
-
   stat_page = lv_menu_page_create(combat_menu, NULL);
   lv_menu_set_page(combat_menu, stat_page);
   lv_menu_separator_create(stat_page);
@@ -257,8 +270,6 @@ static void combat_screen(void)
 
   combat_row = 4; // Get from user on input screen
   // combat_col = 4 is always predefined for fields in combatant window
-
-  // create_grid(stat_col, stat_row);
 
   sub_combatPage = lv_menu_page_create(combat_menu, NULL);
   lv_obj_set_width(sub_combatPage, lv_pct(100));
@@ -279,14 +290,14 @@ static void combat_screen(void)
 static void fill_select_page(lv_obj_t * page)
 {
   part * temp = &magmin;
-
-  // ARRAY OF CONT TO KEEP TRACK OF BUTTONS??
+  int i = 0;
 
   while(temp != NULL){
     lv_obj_t * select_cont = lv_menu_cont_create(page);
+    select_arr_cont[i] = select_cont;
     lv_obj_set_width(select_cont, lv_pct(100));
     lv_obj_set_layout(select_cont, LV_LAYOUT_GRID);
-    lv_obj_set_grid_dsc_array(select_cont, column_dsc, row_dsc);
+    lv_obj_set_grid_dsc_array(select_cont, select_col_dsc, select_row_dsc);
 
     label = lv_label_create(select_cont);
     lv_label_set_text(label, temp->name);
@@ -301,12 +312,16 @@ static void fill_select_page(lv_obj_t * page)
     btn = lv_btn_create(select_cont);
     lv_obj_set_size(btn, 75, 30);
     lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_CENTER, 2, 1, LV_GRID_ALIGN_START, 0, 1);
+    lv_obj_add_event_cb(btn, read_combatant, LV_EVENT_ALL, entry);
 
     label = lv_label_create(btn);
     lv_label_set_text(label, "Add");
     lv_obj_center(label);
 
+
+
     temp = temp->next;
+    i++;
   }
 }
 
@@ -350,13 +365,38 @@ static void switch_screen(lv_event_t * e)
   }
 }
 
-static void add_combatant(lv_event_t * e)
+static void read_combatant(lv_event_t * e)
 {
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t * obj = lv_event_get_target(e);
-  if (code == LV_EVENT_CLICKED){
-
+  lv_obj_t * num_enemies_ta = lv_event_get_user_data(e);
+  uint16_t num_enemies = atoi(lv_textarea_get_text(num_enemies_ta));
+  uint16_t selector = 0;
+  // lv_obj_t * obj_parent = obj->parent;
+  for(int i = 0; i < NUM_COMBATANTS; i++){
+    if (select_arr_cont[i] == obj->parent){
+      selector = i;
+      break;
+    }
   }
+  if (code == LV_EVENT_CLICKED){
+    add_combatant(enemies[selector], num_enemies);
+    // Switch statment to detect which button was selected??
+  }
+}
+
+static void add_combatant(part * combatant, uint16_t num)
+{
+  lv_obj_t * selected_cont = lv_menu_cont_create(selected_page);
+  lv_obj_set_width(selected_cont, lv_pct(50));
+  lv_obj_set_layout(selected_cont, LV_LAYOUT_GRID);
+  lv_obj_set_grid_dsc_array(selected_cont, select_col_dsc, select_row_dsc);
+
+
+
+  lv_obj_t * selected_label = lv_label_create(selected_cont);
+  lv_label_set_text(selected_label, combatant->name);
+  lv_obj_set_grid_cell(selected_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 0, 1);
 }
 
 static void get_number(lv_event_t * e)
