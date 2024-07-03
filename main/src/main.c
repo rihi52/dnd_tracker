@@ -62,9 +62,11 @@ part * enemies[POSSIBLE_ENEMIES] = {&stoneGiant, &hillGiant, &frostGiant, &fireG
                                     &tribalWarrior, &banditCaptain, &bandit, &magmin, &orog, &orc};
 
 /***** GRID SETTINGS *****/
-static int32_t select_col_dsc[] = {50, 39, 39 , LV_GRID_TEMPLATE_LAST};
+static int32_t select_col_dsc[] = {58, 38, 30 , LV_GRID_TEMPLATE_LAST};
 static int32_t select_row_dsc[] = {50, LV_GRID_TEMPLATE_LAST};
 
+static int32_t combat_col_dsc[] = {72, 60, 60 , LV_GRID_TEMPLATE_LAST}; // UNUSED
+static int32_t combat_row_dsc[] = {50, LV_GRID_TEMPLATE_LAST};          // UNUSED
 
 /**********************
  *  STATIC PROTOTYPES
@@ -163,7 +165,7 @@ LV_STYLE_CONST_INIT(btn_style, btn_style_props);
 const lv_style_const_prop_t ta_style_props[] = {
   LV_STYLE_CONST_TEXT_FONT(&lv_font_montserrat_10),
   LV_STYLE_CONST_HEIGHT(20),
-  LV_STYLE_CONST_WIDTH(35),
+  LV_STYLE_CONST_WIDTH(40),
   LV_STYLE_CONST_PROPS_END
 };
 
@@ -366,23 +368,24 @@ static void fill_select_page(lv_obj_t * page)
     label = lv_label_create(select_cont);
     lv_obj_add_style(label, &text_style, 0);
     lv_label_set_text(label, temp->name);
-    // lv_obj_set_width(label, 57);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, 0);
     lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 0, 1);
 
     entry = lv_textarea_create(select_cont);
     lv_obj_add_style(entry, &ta_style, 0);
     lv_textarea_set_one_line(entry, true);
     lv_textarea_set_max_length(entry, 1);
-    lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_START, 0, 1);
+    lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_END, 1, 1, LV_GRID_ALIGN_START, 0, 1);
 
     btn = lv_btn_create(select_cont);
     lv_obj_add_style(btn, &btn_style, 0);
+    lv_obj_set_width(btn, 30);
     lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_CENTER, 2, 1, LV_GRID_ALIGN_START, 0, 1);
     lv_obj_add_event_cb(btn, read_combatant, LV_EVENT_ALL, entry);
 
     label = lv_label_create(btn);
     lv_obj_add_style(label, &text_style, 0);
-    lv_label_set_text(label, "Add");
+    lv_label_set_text(label, "+");
     lv_obj_center(label);
 
     temp = temp->next;
@@ -413,14 +416,12 @@ static void fill_combat_screen(void)
       label = lv_label_create(btn);
       lv_obj_add_style(label, &text_style, 0);
       lv_label_set_text(label, final_parts[i].enemy->name);
-      // lv_obj_set_width(label, 57);
       lv_obj_center(label);
 
       entry = lv_textarea_create(combat_cont);
       lv_obj_add_style(entry, &ta_style, 0);
       lv_textarea_set_one_line(entry, true);
       lv_textarea_set_max_length(entry, 3);
-      //lv_obj_set_size(entry, 55, 45);
 
       label = lv_label_create(combat_cont);
       lv_obj_add_style(label, &text_style, 0);
