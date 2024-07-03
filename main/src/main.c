@@ -18,6 +18,7 @@
 /*********************
  *      DEFINES
  *********************/
+#define POSSIBLE_ENEMIES 12
 #define NUM_COMBATANTS 3
 #define FINAL_COMBATANTS 3
 
@@ -41,28 +42,21 @@ typedef struct num_enemy{
   int qty;
 }num_enemy;
 
-/* Orc Enemies */
+/***** ENEMIES *****/
 part orc = {"Orc", false, 0, 0, 0, 13, "15", NULL};
-
-/* Orog Enemies */
 part orog = {"Orog", false, 0, 0, 0, 18, "53", &orc};
-
-/* Magmin Enemies */
 part magmin = {"Magmin", false, 0, 0, 0, 15, "9", &orog};
-
-/* Linked list of unique part stats */
-part ildmane = {"ildmane", true, 0, 0, 0, 18, "162", &magmin};
-part okssort = {"okssort", true, 0, 0, 0, 17, "162", &ildmane};
-
-/* Linked list of player stats */
-part theon = {"theon", true, 0, 0, 0,16, "55", &okssort};
-part pax = {"pax", true, 0, 0, 0, 16, "57", &theon};
-part finn = {"finn", true, 0, 0, 0, 15, "36", &pax};
-part ravi = {"ravi", true, 0, 0, 0, 16, "34", &finn};
+part bandit = {"Bandit", false, 0, 0, 0, 12, "11", &magmin};
+part banditCaptain = {"Bandit Captain", false, 0, 0, 0, 15, "65", &bandit};
+part tribalWarrior = {"Tribal Warrior", false, 0, 0, 0, 12, "15", &banditCaptain};
+part berserker = {"Berserker", false, 0, 0, 0, 13, "63", &tribalWarrior};
+part fireGiant = {"Fire Giant", false, 0, 0, 0, 18, "163", &berserker};
+part frostGiant = {"Frost Giant", false, 0, 0, 0, 15, "138", &fireGiant};
+part hillGiant = {"Hill Giant", false, 0, 0, 0, 13, "105", &frostGiant};
+part stoneGiant = {"Stone Giant", false, 0, 0, 0, 17, "126", &hillGiant};
 
 /***** ARRAY OF COMBATANTS ******/
-part * combatants[9] = {&ravi, &finn, &pax, &theon, &okssort, &ildmane, &magmin, &orog, &orc};
-part * enemies[3] = {&magmin, &orog, &orc};
+part * enemies[POSSIBLE_ENEMIES] = {&stoneGiant, &hillGiant, &frostGiant, &fireGiant, &berserker, &tribalWarrior, &banditCaptain, &bandit, &magmin, &orog, &orc};
 
 /***** GRID SETTINGS *****/
 static int32_t select_col_dsc[] = {50, 39, 39 , LV_GRID_TEMPLATE_LAST};
@@ -80,7 +74,7 @@ static lv_display_t * hal_init(int32_t w, int32_t h);
 static lv_obj_t * scr;
 static lv_obj_t * combat_menu;
 
-static lv_obj_t * select_arr_cont[NUM_COMBATANTS];
+static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
 static lv_obj_t * selected_page;
 static lv_obj_t * selected_cont;
 static lv_obj_t * selected_label;
@@ -93,7 +87,7 @@ static lv_obj_t * entry;
 static lv_obj_t * btn;
 
 static uint16_t parts_counter = 0;
-static num_enemy final_parts[FINAL_COMBATANTS] = {{NULL, 0}, {NULL, 0}, {NULL, 0}};
+static num_enemy final_parts[POSSIBLE_ENEMIES] = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}}; /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
 static lv_obj_t * sub_combatPage;
 static lv_obj_t * combat_section;
 static lv_obj_t * combat_cont;
@@ -318,14 +312,15 @@ static void combat_screen(void)
 /**********************
  *  HELPER FUNCTIONS
  **********************/
+
 static void fill_select_page(lv_obj_t * page)
 {
-  part * temp = &magmin;
+  part * temp = &stoneGiant;
   int i = 0;
 
   while(temp != NULL){
     lv_obj_t * select_cont = lv_menu_cont_create(page);
-    select_arr_cont[i] = select_cont; /*Keep track of each group to be able to add them to the selected_page*/
+    select_arr_cont[i] = select_cont; /*Keep track of each group to be able to add them to the selected_page ***** SWITCH TO LINKED LIST*/
     lv_obj_set_width(select_cont, lv_pct(100));
     lv_obj_set_layout(select_cont, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(select_cont, select_col_dsc, select_row_dsc);
@@ -338,14 +333,12 @@ static void fill_select_page(lv_obj_t * page)
 
     entry = lv_textarea_create(select_cont);
     lv_obj_add_style(entry, &ta_style, 0);
-    //lv_obj_set_width(entry, 50);
     lv_textarea_set_one_line(entry, true);
     lv_textarea_set_max_length(entry, 2);
     lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_START, 0, 1);
 
     btn = lv_btn_create(select_cont);
     lv_obj_add_style(btn, &btn_style, 0);
-    //lv_obj_set_size(btn, 75, 30);
     lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_CENTER, 2, 1, LV_GRID_ALIGN_START, 0, 1);
     lv_obj_add_event_cb(btn, read_combatant, LV_EVENT_ALL, entry);
 
@@ -363,7 +356,7 @@ static void fill_combat_screen(void)
 {
   int total_enemies = 0;
   for(int i = 0; i < FINAL_COMBATANTS; i++){
-    total_enemies = total_enemies + final_parts[i].qty;
+    total_enemies = total_enemies + final_parts[i].qty; // SWITCH TO LINKED LIST
   }
 
   for(int i = 0; i < FINAL_COMBATANTS; i++){
@@ -414,27 +407,26 @@ static void read_combatant(lv_event_t * e)
   lv_obj_t * num_enemies_ta = lv_event_get_user_data(e);
   const char * num_enemies = lv_textarea_get_text(num_enemies_ta);
   uint16_t selector = 0;
-
-  for(int i = 0; i < NUM_COMBATANTS; i++){
-    if (select_arr_cont[i] == obj->parent){
-      selector = i;
-      break;
-    }
-  }
   if (code == LV_EVENT_CLICKED){
+    for(int i = 0; i < POSSIBLE_ENEMIES; i++){
+      if (select_arr_cont[i] == obj->parent){ // LINKED LIST INSTEAD
+        selector = i;
+        break;
+      }
+    }
     add_combatant(enemies[selector], num_enemies);
   }
 }
 
 static void add_combatant(part * combatant, const char * num)
 {
-  for(int i = 0; i < FINAL_COMBATANTS; i++){
+  for(int i = 0; i < POSSIBLE_ENEMIES; i++){ // LINKED LIST INSTEAD
     if(final_parts[i].enemy == NULL){
       final_parts[i].enemy = combatant;
       final_parts[i].qty = atoi(num);
       parts_counter++;
       break;
-    }else if(parts_counter >= FINAL_COMBATANTS){
+    }else if(parts_counter >= POSSIBLE_ENEMIES){
       return;
     }
   }
