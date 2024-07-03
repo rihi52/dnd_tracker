@@ -14,11 +14,12 @@
 #include "lvgl/lvgl.h"
 #include "lvgl/examples/lv_examples.h"
 #include "lvgl/demos/lv_demos.h"
+#include <stdio.h>
 
 /*********************
  *      DEFINES
  *********************/
-#define POSSIBLE_ENEMIES 12
+#define POSSIBLE_ENEMIES 11
 #define NUM_COMBATANTS 3
 #define FINAL_COMBATANTS 3
 
@@ -78,10 +79,11 @@ static lv_obj_t * scr;
 /* SET UP SCREEN */
 static lv_obj_t * builder_menu;
 static lv_obj_t * build_win;
-
-/* SET UP SCREEN, LEFT SIDE */
 static lv_obj_t * start_label;
 static lv_obj_t * start_btn;
+
+/* SET UP SCREEN, LEFT SIDE */
+static lv_obj_t * sub_selectPage;
 static lv_obj_t * select_cont;
 
 /* SET UP SCREEN, RIGHT SIDE */
@@ -115,7 +117,7 @@ static lv_obj_t * head_cont;
 static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
 static num_enemy final_parts[POSSIBLE_ENEMIES] = { /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
                                                   {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0},
-                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}
+                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}
                                                   };
 
 /**********************
@@ -283,20 +285,21 @@ static void setup_screen(void)
   selected_page = lv_menu_page_create(builder_menu, NULL);
   lv_menu_set_page(builder_menu, selected_page);
   lv_menu_separator_create(selected_page);
+
   selected_cont = lv_menu_cont_create(selected_page);
   lv_obj_set_align(selected_cont, LV_ALIGN_BOTTOM_RIGHT);
   lv_obj_set_width(selected_cont, lv_pct(100));
 
-  lv_obj_t * sub_selectPage = lv_menu_page_create(builder_menu, NULL);
+  sub_selectPage = lv_menu_page_create(builder_menu, NULL);
   lv_obj_set_width(sub_selectPage, lv_pct(100));
   lv_menu_set_sidebar_page(builder_menu, sub_selectPage);
 
   fill_select_page(sub_selectPage);
+  lv_obj_scroll_to_y(sub_selectPage, 0, LV_ANIM_OFF);
 
   lv_menu_t* menu = (lv_menu_t*)builder_menu;
   // set sidebar width
   lv_obj_set_width(menu->sidebar, LV_PCT(50));
-
 }
 
 static void combat_screen(void)
@@ -338,7 +341,6 @@ static void combat_screen(void)
   lv_menu_t* menu_t = (lv_menu_t*)combat_menu;
   // set sidebar width
   lv_obj_set_width(menu_t->sidebar, LV_PCT(40));
-
 }
 
 
@@ -367,7 +369,7 @@ static void fill_select_page(lv_obj_t * page)
     entry = lv_textarea_create(select_cont);
     lv_obj_add_style(entry, &ta_style, 0);
     lv_textarea_set_one_line(entry, true);
-    lv_textarea_set_max_length(entry, 2);
+    lv_textarea_set_max_length(entry, 1);
     lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_START, 0, 1);
 
     btn = lv_btn_create(select_cont);
@@ -433,7 +435,10 @@ static void start_fight(lv_event_t * e)
   if (code == LV_EVENT_CLICKED){
     combat_screen();
     fill_combat_screen();
-    lv_obj_del(build_win);
+    for(int i = 0; i < POSSIBLE_ENEMIES; i++){
+      lv_obj_del(select_arr_cont[i]);
+    }
+    //lv_obj_del(build_win);
   }
 }
 
