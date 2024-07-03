@@ -85,7 +85,6 @@ static lv_obj_t * start_btn;
 static lv_obj_t * select_cont;
 
 /* SET UP SCREEN, RIGHT SIDE */
-
 static lv_obj_t * selected_page;
 static lv_obj_t * selected_cont;
 static lv_obj_t * selected_label;
@@ -114,8 +113,10 @@ static lv_obj_t * btn;
 static lv_obj_t * cont;
 static lv_obj_t * head_cont;
 static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
-static num_enemy final_parts[POSSIBLE_ENEMIES] = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0},
-                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}}; /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
+static num_enemy final_parts[POSSIBLE_ENEMIES] = { /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
+                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0},
+                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}
+                                                  };
 
 /**********************
  *      MACROS
@@ -257,9 +258,9 @@ static void setup_screen(void)
   build_win = lv_win_create(lv_screen_active());
 
   head_cont = lv_win_get_header(build_win);
+  lv_obj_set_height(head_cont, 40);
 
   label = lv_label_create(head_cont);
-  lv_obj_set_height(head_cont, 40);
   lv_label_set_text(label, "Combat Builder");
   lv_obj_set_style_pad_right(label, 125, 0);
 
@@ -301,10 +302,11 @@ static void setup_screen(void)
 static void combat_screen(void)
 {
   combat_win = lv_win_create(lv_screen_active());
-  head_cont = lv_win_get_header(combat_win);
-  label = lv_label_create(head_cont);
 
+  head_cont = lv_win_get_header(combat_win);
   lv_obj_set_height(head_cont, 40);
+
+  label = lv_label_create(head_cont);
   lv_label_set_text(label, "Fight!");
   lv_obj_set_style_pad_right(label, 190, 0);
 
@@ -316,8 +318,11 @@ static void combat_screen(void)
   lv_label_set_text(label, "Finish!");
   lv_obj_center(label);
 
-  combat_menu = lv_menu_create(combat_win);
-  lv_obj_set_size(combat_menu, lv_display_get_horizontal_resolution(NULL), lv_display_get_vertical_resolution(NULL));
+  cont = lv_win_get_content(combat_win);
+  lv_obj_set_style_pad_all(cont, 0, 0);
+
+  combat_menu = lv_menu_create(cont);
+  lv_obj_set_size(combat_menu, lv_pct(100), lv_pct(100));
   lv_obj_center(combat_menu);
   lv_menu_set_mode_header(combat_menu, LV_MENU_HEADER_TOP_UNFIXED);
 
