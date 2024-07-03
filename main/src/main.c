@@ -74,36 +74,48 @@ static lv_display_t * hal_init(int32_t w, int32_t h);
  *  STATIC VARIABLES
  **********************/
 static lv_obj_t * scr;
-static lv_obj_t * combat_menu;
+
+/* SET UP SCREEN */
 static lv_obj_t * builder_menu;
+static lv_obj_t * build_win;
+
+/* SET UP SCREEN, LEFT SIDE */
 static lv_obj_t * start_label;
 static lv_obj_t * start_btn;
-static lv_obj_t * cont;
-static lv_obj_t * build_win;
-static lv_obj_t * head_cont;
-
-static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
 static lv_obj_t * select_cont;
+
+/* SET UP SCREEN, RIGHT SIDE */
+
 static lv_obj_t * selected_page;
 static lv_obj_t * selected_cont;
 static lv_obj_t * selected_label;
 static lv_obj_t * selected_num;
 
+/* COMBAT SCREEN */
+static lv_obj_t * combat_menu;
+static lv_obj_t * combat_win;
+
+/* COMBAT SCREEN, RIGHT SIDE */
 static lv_obj_t * stat_page;
 static lv_obj_t * stat_section;
 static lv_obj_t * stat_cont;
-static lv_obj_t * entry;
-static lv_obj_t * btn;
 
+
+/* COMBAT SCREEN, LEFT SIDE */
 static uint16_t parts_counter = 0;
-static num_enemy final_parts[POSSIBLE_ENEMIES] = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}}; /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
 static lv_obj_t * sub_combatPage;
 static lv_obj_t * combat_section;
 static lv_obj_t * combat_cont;
-static lv_obj_t * combat_win;
 
+ /* GENERIC REUSE */
 static lv_obj_t * label;
-static uint16_t num_combat = 0;
+static lv_obj_t * entry;
+static lv_obj_t * btn;
+static lv_obj_t * cont;
+static lv_obj_t * head_cont;
+static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
+static num_enemy final_parts[POSSIBLE_ENEMIES] = {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0},
+                                                  {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}}; /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
 
 /**********************
  *      MACROS
@@ -124,6 +136,8 @@ static uint16_t num_combat = 0;
 /**********************
  *      STYLES
  **********************/
+
+/* MAKING STYLES CONST TO AVOID DYNAMIC ALLOCATION */
 
 const lv_style_const_prop_t text_style_props[] = {
   LV_STYLE_CONST_TEXT_FONT(&lv_font_montserrat_12),
