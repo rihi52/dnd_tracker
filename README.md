@@ -1,3 +1,8 @@
+# Project to use LVGL, see below, to make a dnd combat tracker
+
+This project is to practice embedded graphics programming using LVGL by making a combat tracker similar to the one provided on dndbeyond.
+
+
 # Simulator project for LVGL embedded GUI Library
 
 The [LVGL](https://github.com/lvgl/lvgl) is written mainly for microcontrollers and embedded systems, however you can run the library **on your PC** as well without any embedded hardware. The code written on PC can be simply copied when your are using an embedded system.

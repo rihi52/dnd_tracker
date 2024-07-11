@@ -19,9 +19,8 @@
 /*********************
  *      DEFINES
  *********************/
-#define POSSIBLE_ENEMIES 11
-#define NUM_COMBATANTS 3
-#define FINAL_COMBATANTS 3
+#define POSSIBLE_ENEMY_GROUPS 11 // LIMITS THE TOTAL GROUPS OF ENEMIES ALLOWED ON THE RIGHT SIDE OF THE SET UP SCREEN // CHANGE TO MATCH THE NUMBER OF PART STRUCTS ENTERED IN THE ENEMIES SECTION
+#define FINAL_COMBATANTS 11 // LIMITS THE NUMBER OF FINAL GROUPS TRANSFERRED TO THE COMBAT SCREEN
 
 
 /**********************
@@ -58,7 +57,7 @@ part stoneGiant = {"Stone Giant", false, 0, 0, 0, 17, "126", &hillGiant};
 
 /***** ARRAY OF COMBATANTS ******/
 /* ENEMIES MUST BE ADDED TO ARRAY IN THE SAME ORDER THEY APPEAR IN THE ABOVE LINKED LIST */
-part * enemies[POSSIBLE_ENEMIES] = {&stoneGiant, &hillGiant, &frostGiant, &fireGiant, &berserker,
+part * enemies[POSSIBLE_ENEMY_GROUPS] = {&stoneGiant, &hillGiant, &frostGiant, &fireGiant, &berserker,
                                     &tribalWarrior, &banditCaptain, &bandit, &magmin, &orog, &orc};
 
 /***** GRID SETTINGS *****/
@@ -116,8 +115,8 @@ static lv_obj_t * entry;
 static lv_obj_t * btn;
 static lv_obj_t * cont;
 static lv_obj_t * head_cont;
-static lv_obj_t * select_arr_cont[POSSIBLE_ENEMIES];
-static num_enemy final_parts[POSSIBLE_ENEMIES] = { /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
+static lv_obj_t * select_arr_cont[POSSIBLE_ENEMY_GROUPS]; // TRACK ENEMY TYPES ON THE LEFT SIDE OF SET UP SCREEN
+static num_enemy final_parts[POSSIBLE_ENEMY_GROUPS] = { /* RESERVING MEMORY FOR POSSIBLE ENEMIES */
                                                   {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0},
                                                   {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}
                                                   };
@@ -271,6 +270,7 @@ static void setup_screen(void)
   lv_label_set_text(label, "Combat Builder");
   lv_obj_set_style_pad_right(label, 125, 0);
 
+/* START THE FIGHT - TRANSFER SELECTED ENEMY GROUPS TO THE COMBAT SCREEN */
   start_btn = lv_btn_create(head_cont);
   lv_obj_set_align(start_btn, LV_ALIGN_RIGHT_MID);
   lv_obj_add_event_cb(start_btn, start_fight, LV_EVENT_ALL, NULL);
@@ -299,7 +299,7 @@ static void setup_screen(void)
   lv_obj_set_width(sub_selectPage, lv_pct(100));
   lv_menu_set_sidebar_page(builder_menu, sub_selectPage);
 
-  fill_select_page(sub_selectPage);
+  fill_select_page(sub_selectPage); // ADD OPTIONS TO LEFT SIDE
   lv_obj_scroll_to_y(sub_selectPage, 0, LV_ANIM_OFF);
 
   lv_menu_t* menu = (lv_menu_t*)builder_menu;
@@ -353,6 +353,7 @@ static void combat_screen(void)
  *  HELPER FUNCTIONS
  **********************/
 
+/* LIST OF OPTIONS ON LEFT SIDE OF SET UP SCREEN */
 static void fill_select_page(lv_obj_t * page)
 {
   part * temp = &stoneGiant;
@@ -360,7 +361,7 @@ static void fill_select_page(lv_obj_t * page)
 
   while(temp != NULL){
     select_cont = lv_menu_cont_create(page);
-    select_arr_cont[i] = select_cont; /*Keep track of each group to be able to add them to the selected_page ***** SWITCH TO LINKED LIST*/
+    select_arr_cont[i] = select_cont; /*Keep track of each group to be able to add them to the selected_page // TRACK LABEL INSTEAD - ALLOWS COMPARISON OF NAME AND CAN GET TO CONT FROM PARENT***** SWITCH TO LINKED LIST*/
     lv_obj_set_width(select_cont, lv_pct(100));
     lv_obj_set_layout(select_cont, LV_LAYOUT_GRID);
     lv_obj_set_grid_dsc_array(select_cont, select_col_dsc, select_row_dsc);
@@ -377,6 +378,7 @@ static void fill_select_page(lv_obj_t * page)
     lv_textarea_set_max_length(entry, 1);
     lv_obj_set_grid_cell(entry, LV_GRID_ALIGN_END, 1, 1, LV_GRID_ALIGN_START, 0, 1);
 
+/* ADD ENEMY GROUP TO RIGHT SIDE OF SET UP SCREEN */
     btn = lv_btn_create(select_cont);
     lv_obj_add_style(btn, &btn_style, 0);
     lv_obj_set_width(btn, 30);
@@ -393,6 +395,7 @@ static void fill_select_page(lv_obj_t * page)
   }
 }
 
+/* FILLS THE LEFT SIDE OF THE COMBAT SCREEN WITH THE SELECTED ENEMIES */
 static void fill_combat_screen(void)
 {
   int total_enemies = 0;
@@ -400,15 +403,11 @@ static void fill_combat_screen(void)
     total_enemies = total_enemies + final_parts[i].qty; // SWITCH TO LINKED LIST
   }
 
-  for(int i = 0; i < FINAL_COMBATANTS; i++){
-    for(int j = 0; j < final_parts[i].qty; j++){
+  for(int i = 0; i < FINAL_COMBATANTS; i++){ /* LOOP THROUGH ALL FINAL COMBATANTS */
+    for(int j = 0; j < final_parts[i].qty; j++){ /* LOOP THROUGH FINAL PARTS ARRAY AND DUPLICATE ENEMIES PER THE INDICATED QUANTITES FROM THE SET UP SCREEN */
       combat_cont = lv_menu_cont_create(sub_combatPage);
       lv_obj_set_layout(combat_cont, LV_LAYOUT_FLEX);
       lv_obj_set_flex_flow(combat_cont, LV_FLEX_FLOW_ROW);
-
-      label = lv_label_create(combat_cont);
-      lv_obj_add_style(label, &text_style, 0);
-      lv_label_set_text(label, "Init: ");
 
       btn = lv_btn_create(combat_cont);
       lv_obj_set_size(btn, 60, 30);
@@ -439,12 +438,11 @@ static void start_fight(lv_event_t * e)
   lv_obj_t * obj = lv_event_get_target(e);
 
   if (code == LV_EVENT_CLICKED){
-    combat_screen();
-    fill_combat_screen();
-    for(int i = 0; i < POSSIBLE_ENEMIES; i++){
-      lv_obj_del(select_arr_cont[i]);
+    combat_screen(); // SET UP COMBAT SCREEN
+    fill_combat_screen(); // ADD THE ENEMIES
+    for(int i = 0; i < POSSIBLE_ENEMY_GROUPS; i++){
+      lv_obj_del(select_arr_cont[i]); // DELETE ITEMS ON THE SET UP SCREEN TO SAVE RAM
     }
-    //lv_obj_del(build_win);
   }
 }
 
@@ -456,7 +454,7 @@ static void read_combatant(lv_event_t * e)
   const char * num_enemies = lv_textarea_get_text(num_enemies_ta);
   uint16_t selector = 0;
   if (code == LV_EVENT_CLICKED){
-    for(int i = 0; i < POSSIBLE_ENEMIES; i++){
+    for(int i = 0; i < POSSIBLE_ENEMY_GROUPS; i++){ /* TRACK CONT CONTAINING ENEMY GROUPS AND QUANTITIES AS THEY ARE ADDED TO THE RIGHT SIDE OF SET UP SCREEN */
       if (select_arr_cont[i] == obj->parent){ // LINKED LIST INSTEAD
         selector = i;
         break;
@@ -468,17 +466,17 @@ static void read_combatant(lv_event_t * e)
 
 static void add_combatant(part * combatant, const char * num)
 {
-  for(int i = 0; i < POSSIBLE_ENEMIES; i++){ // LINKED LIST INSTEAD
+  for(int i = 0; i < POSSIBLE_ENEMY_GROUPS; i++){ // TRACK FINAL ENEMY STATS // LINKED LIST INSTEAD
     if(final_parts[i].enemy == NULL){
       final_parts[i].enemy = combatant;
       final_parts[i].qty = atoi(num);
       parts_counter++;
       break;
-    }else if(parts_counter >= POSSIBLE_ENEMIES){
+    }else if(parts_counter >= POSSIBLE_ENEMY_GROUPS){
       return;
     }
   }
-
+  printf("%s\n", final_parts[0].enemy->name);  // DEBUGGING
   selected_cont = lv_menu_cont_create(selected_page);
   lv_obj_set_width(selected_cont, lv_pct(100));
   lv_obj_set_layout(selected_cont, LV_LAYOUT_GRID);
@@ -498,7 +496,7 @@ static void add_combatant(part * combatant, const char * num)
   btn = lv_btn_create(selected_cont);
   lv_obj_set_size(btn, 30, 20);
   lv_obj_set_grid_cell(btn, LV_GRID_ALIGN_START, 2, 1, LV_GRID_ALIGN_START, 0, 1);
-  lv_obj_add_event_cb(btn, remove_combatant, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(btn, remove_combatant, LV_EVENT_ALL, selected_label);
 
   label = lv_label_create(btn);
   lv_label_set_text(label, "-");
@@ -510,8 +508,22 @@ static void remove_combatant(lv_event_t * e)
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t * obj = lv_event_get_target(e);
   lv_obj_t * to_delete = obj->parent;
-
+  //lv_obj_t * name_to_delete = lv_event_get_user_data(e);
+  const char * name = lv_label_get_text(lv_event_get_user_data(e));
   if(code == LV_EVENT_CLICKED){
+    for(int i = 0; i < POSSIBLE_ENEMY_GROUPS; i++){ /* TRACK CONT CONTAINING ENEMY GROUPS AND QUANTITIES AS THEY ARE ADDED TO THE RIGHT SIDE OF SET UP SCREEN */
+      if (select_arr_cont[i] == to_delete){ // LINKED LIST INSTEAD
+        select_arr_cont[i] = NULL;
+        final_parts[i].enemy = NULL;
+        final_parts[i].qty = 0;
+      }
+      printf("%s\n", final_parts[0].enemy->name);
+      // if (final_parts[i].enemy != NULL && lv_strcmp(final_parts[i].enemy->name, lv_label_get_text(lv_event_get_user_data(e)))){
+      //   final_parts[i].enemy = NULL;
+      //   final_parts[i].qty = 0;
+      //   printf("%s\n", final_parts[0].enemy->name);
+      // }
+    }
     lv_obj_del(to_delete);
   }
 }
