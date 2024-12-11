@@ -1,6 +1,6 @@
 # Project to use LVGL, see below, to make a dnd combat tracker
 
-This project is to practice embedded graphics programming using LVGL by making a combat tracker similar to the one provided on dndbeyond.
+This project is to practice embedded graphics programming using LVGL by making a combat tracker based on dndbeyond's tracker.
 
 ## My Screenshots
 ![image](https://github.com/rihi52/dnd_tracker/blob/main/main/src/Assets/MainScreen.PNG)
